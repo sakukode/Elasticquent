@@ -34,16 +34,7 @@ trait ElasticquentConfigTrait
     {
         $key = $prefix . ($key ? '.' : '') . $key;
 
-        if (function_exists('config')) {
-            // Get config helper for Laravel 5.1+
-            $config_helper = config();
-        } elseif (function_exists('app')) {
-            // Get config helper for Laravel 4 & Laravel 5.1
-            $config_helper = app('config');
-        } else {
-            // Create a config helper when using stand-alone Eloquent
-            $config_helper = $this->getConfigHelper();
-        }
+        $config_helper = $this->getConfigHelper();
 
         return $config_helper->get($key);
     }
@@ -69,7 +60,7 @@ trait ElasticquentConfigTrait
      * Get the config path and file name to use when Laravel framework isn't present
      * e.g. using Eloquent stand-alone or running unit tests
      *
-     * @return string config file path 
+     * @return string config file path
      */
     protected function getConfigFile()
     {
