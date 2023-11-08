@@ -14,10 +14,14 @@
  *
  * The Elasticquent method will then format the response and we test that the resulting 
  * Elasticquent results collection methods return the results we expect to verify this. 
- */ 
+ */
 
-class ElasticSearchMethodsTest extends PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class ElasticSearchMethodsTest extends TestCase
 {
+    protected $model;
+    
     protected $expectedHits = [
             'total' => 2,
             'max_score' => 0.7768564,
@@ -41,7 +45,7 @@ class ElasticSearchMethodsTest extends PHPUnit_Framework_TestCase
             ]
         ];
 
-    public function setUp()
+    protected function setUp(): void
     {
         $this->model = new SearchTestModel;
     }

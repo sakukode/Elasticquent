@@ -5,6 +5,7 @@ namespace Elasticquent;
 use Exception;
 use ReflectionMethod;
 use Illuminate\Database\Eloquent\Model;
+use Elastic\Elasticsearch\Response\Elasticsearch;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
@@ -291,7 +292,7 @@ trait ElasticquentTrait
      * Add to Search Index
      *
      * @throws Exception
-     * @return array
+     * @return Elasticsearch
      */
     public function addToIndex()
     {
@@ -332,9 +333,11 @@ trait ElasticquentTrait
     public function updateIndex()
     {
         $params = $this->getBasicEsParams();
+        $params['id'] = $this->getKey();
 
         // Get our document body data.
         $params['body']['doc'] = $this->getIndexDocumentData();
+        $params['body']['doc_as_upsert'] = true;
 
         return $this->getElasticSearchClient()->update($params);
     }
@@ -369,7 +372,7 @@ trait ElasticquentTrait
     public function getBasicEsParams($getIdIfPossible = true, $limit = null, $offset = null)
     {
         $params = array(
-            'index' => $this->getIndexName(),
+            'index' => $this->getIndexName() . '-' . $this->getTypeName(),
             'type' => $this->getTypeName(),
         );
 
@@ -456,7 +459,7 @@ trait ElasticquentTrait
             'properties' => $instance->getMappingProperties(),
         );
 
-        $mapping['body'][$instance->getTypeName()] = $params;
+        $mapping['body'] = $params;
 
         return $instance->getElasticSearchClient()->indices()->putMapping($mapping);
     }
@@ -513,7 +516,7 @@ trait ElasticquentTrait
         $client = $instance->getElasticSearchClient();
 
         $index = array(
-            'index' => $instance->getIndexName(),
+            'index' => $instance->getIndexName() . '-' . $instance->getTypeName(),
         );
 
         $settings = $instance->getIndexSettings();
@@ -531,7 +534,7 @@ trait ElasticquentTrait
 
         $mappingProperties = $instance->getMappingProperties();
         if (!is_null($mappingProperties)) {
-            $index['body']['mappings'][$instance->getTypeName()] = [
+            $index['body']['mappings'] = [
                 '_source' => array('enabled' => true),
                 'properties' => $mappingProperties,
             ];
@@ -552,7 +555,7 @@ trait ElasticquentTrait
         $client = $instance->getElasticSearchClient();
 
         $index = array(
-            'index' => $instance->getIndexName(),
+            'index' => $instance->getIndexName() . '-' . $instance->getTypeName(),
         );
 
         return $client->indices()->delete($index);
@@ -586,13 +589,14 @@ trait ElasticquentTrait
     public function newFromHitBuilder($hit = array())
     {
         $key_name = $this->getKeyName();
-        
+
         $attributes = $hit['_source'];
 
         if (isset($hit['_id'])) {
-            $attributes[$key_name] = is_int($hit['_id']) ? intval($hit['_id']) : $hit['_id'];
+            $idAsInteger = intval($hit['_id']);
+            $attributes[$key_name] = $idAsInteger ? $idAsInteger : $hit['_id'];
         }
-        
+
         // Add fields to attributes
         if (isset($hit['fields'])) {
             foreach ($hit['fields'] as $key => $value) {
@@ -685,7 +689,7 @@ trait ElasticquentTrait
         $items = array_map(function ($item) use ($instance, $parentRelation) {
             // Convert all null relations into empty arrays
             $item = $item ?: [];
-            
+
             return static::newFromBuilderRecursive($instance, $item, $parentRelation);
         }, $items);
 
@@ -805,3 +809,4 @@ trait ElasticquentTrait
         return false;
     }
 }
+

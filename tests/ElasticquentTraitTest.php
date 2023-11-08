@@ -1,15 +1,18 @@
 <?php
 
-class ElasticquentTraitTest extends PHPUnit_Framework_TestCase {
+use PHPUnit\Framework\TestCase;
+
+class ElasticquentTraitTest extends TestCase {
 
     public $modelData = array('name' => 'Test Name');
 
+    protected $model;
     /**
      * Testing Model
      *
      * @return void
      */
-    public function setup()
+    protected function setup(): void
     {
         $this->model = new TestModel;
         $this->model->fill($this->modelData);
