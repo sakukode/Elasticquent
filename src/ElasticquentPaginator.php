@@ -5,6 +5,7 @@ use Illuminate\Support\Collection;
 
 class ElasticquentPaginator extends Paginator
 {
+    protected $hits;
     /**
      * Create a new paginator instance.
      *
